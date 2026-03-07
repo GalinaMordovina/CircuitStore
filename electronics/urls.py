@@ -1,7 +1,6 @@
-from django.urls import path
-
-from electronics.views import HealthCheckView
+from django.urls import path, include
 
 urlpatterns = [
-    path("health/", HealthCheckView.as_view(), name="health"),
+    # Все API-маршруты приложения electronics подключаем отсюда
+    path("", include("electronics.api.urls")),
 ]
