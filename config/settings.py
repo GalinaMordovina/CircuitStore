@@ -1,5 +1,6 @@
 from pathlib import Path
 import os
+from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -31,6 +32,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "django_filters",
     "drf_yasg",
+        "rest_framework_simplejwt",  # JWT-аутентификация
+
     # наши приложения
     "electronics",
 ]
@@ -121,14 +124,22 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
 
-    # Явно указываем способы аутентификации
+    # Используем JWT для аутентификации
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
 
     # Глобальный backend для фильтрации
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+}
+
+# Настройки JWT-токенов
+SIMPLE_JWT = {
+    # Увеличиваем время жизни access-токена для удобства тестирования
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
+
+    # Refresh-токен живет дольше
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
