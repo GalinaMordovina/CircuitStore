@@ -1,72 +1,93 @@
 ## Онлайн платформа-торговой сети электроники
 
-### ## Ветка auth-and-access-check
+### Ветка postgres-settings
+#### В рамках данной ветки реализовано подключение проекта к базе данных PostgreSQL.
 
-### ## Аутентификация и контроль доступа
+### Настройка PostgreSQL
+#### 1. Создание базы данных
 
-В проекте реализована аутентификация пользователей с использованием JWT-токенов и разграничение доступа к API.
+В PostgreSQL создаётся база данных:
+```
+CREATE DATABASE circuitstore_db;
+```
+#### 2. Создание пользователя
 
-### JWT-аутентификация
+Создаётся отдельный пользователь для работы приложения:
+```
+CREATE USER circuitstore_user WITH PASSWORD 'your_password';
+```
+#### 3. Выдача прав пользователю
 
-Для аутентификации используется библиотека `djangorestframework-simplejwt`.
+Пользователь получает права на работу с базой данных:
+```
+GRANT ALL PRIVILEGES ON DATABASE circuitstore_db TO circuitstore_user;
+```
+Это позволяет:
+- читать данные
+- создавать таблицы
+- изменять таблицы
+- использовать базу данных для тестирования
 
-#### Добавлены эндпоинты:
+#### 4. Настройка подключения в Django
 
-| Метод | URL | Описание |
-|------|-----|-----|
-| POST | `/api/token/` | Получение access и refresh токенов |
-| POST | `/api/token/refresh/` | Обновление access токена |
-
-#### Пример запроса:
-
-```json
-POST /api/token/
-
-{
-  "username": "staff_user",
-  "password": "password"
+В `config/settings.py` используется подключение:
+```
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "circuitstore_db",
+        "USER": "circuitstore_user",
+        "PASSWORD": "your_password",
+        "HOST": "localhost",
+        "PORT": "5432",
+    }
 }
 ```
-Ответ:
-```json
-{
-  "refresh": "jwt_refresh_token",
-  "access": "jwt_access_token"
-}
+#### 5. Применение миграций
+
+После подключения базы данных выполняются миграции:
 ```
-#### Использование токена
-
-Для доступа к защищённым эндпоинтам необходимо передать access-токен в заголовке запроса:
-
-```Authorization: Bearer <access_token>```
-
-Пример:
+python manage.py migrate
 ```
-GET /api/network-nodes/
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Это создаёт все таблицы проекта.
+
+#### 6. Создание администратора
 ```
-#### Ограничение доступа
+python manage.py createsuperuser
+```
+После этого можно работать через Django Admin:
+```
+http://127.0.0.1:8000/admin/
+```
 
-Для защиты API реализован кастомный permission-класс:
+### Проверка работы базы данных
 
-``` IsActiveStaffPermission ```
+В проекте реализована модель сети поставок электроники:
 
-Доступ к API имеют только пользователи, которые:
-- авторизованы
-- имеют статус сотрудника (`is_staff=True`)
-- имеют активную учетную запись (`is_active=True`)
+- Factory - завод
+- Retail - розничная сеть
+- Entrepreneur - магазин
 
-Данный permission применяется к ViewSet:
-```NetworkNodeViewSet```
+Пример структуры сети:
 
-#### Проверка прав доступа
+Apple Factory
 
-Была выполнена проверка работы системы доступа с использованием трёх типов пользователей:
+    ↓
+Apple Retail
 
-| Пользователь   | is_staff | is_active | Результат           |
-| -------------- | -------- | --------- | ------------------- |
-| staff_user     | True     | True      | полный доступ к API |
-| regular_user   | False    | True      | доступ запрещён     |
-| inactive_staff | True     | False     | токен не выдаётся   |
+    ↓
+Local Electronics Shop
 
-Таким образом доступ к API получают только активные сотрудники системы, что соответствует требованиям задания.
+И аналогично для Samsung.
+
+#### Данные сохраняются в PostgreSQL и могут быть проверены SQL-запросом:
+```
+SELECT 
+n.name AS node,
+p.name AS product,
+p.model AS model
+FROM electronics_networknode_products np
+JOIN electronics_networknode n ON np.networknode_id = n.id
+JOIN electronics_product p ON np.product_id = p.id
+ORDER BY n.name;
+```
