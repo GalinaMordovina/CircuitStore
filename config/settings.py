@@ -72,11 +72,26 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# База данных
+# База данных PostgreSQL
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        # PostgreSQL вместо SQLite
+        "ENGINE": "django.db.backends.postgresql",
+
+        # Название базы данных
+        "NAME": os.getenv("POSTGRES_DB"),
+
+        # Пользователь PostgreSQL
+        "USER": os.getenv("POSTGRES_USER"),
+
+        # Пароль пользователя PostgreSQL
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD"),
+
+        # Хост, где запущена база данных
+        "HOST": os.getenv("POSTGRES_HOST", "localhost"),
+
+        # Порт PostgreSQL
+        "PORT": os.getenv("POSTGRES_PORT", "5432"),
     }
 }
 
