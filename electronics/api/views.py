@@ -1,8 +1,9 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from electronics.api.permissions import IsActiveStaffPermission
 from electronics.api.serializers import NetworkNodeSerializer
@@ -19,21 +20,6 @@ class HealthCheckView(APIView):
         # Возвращаем простой ответ для проверки работоспособности API
         return Response({"status": "ok"})
 
-# class HealthCheckView(APIView):
-#     """Проверка, что JWT-аутентификация работает."""
-#
-#     # Временно закрываем endpoint авторизацией для проверки токена
-#     permission_classes = [IsAuthenticated]
-#
-#     def get(self, request):
-#         return Response(
-#             {
-#                 "status": "ok",
-#                 "user": request.user.username,
-#                 "is_authenticated": request.user.is_authenticated,
-#             }
-#         )
-
 
 class NetworkNodeViewSet(viewsets.ModelViewSet):
     """CRUD для звеньев сети."""
@@ -44,8 +30,32 @@ class NetworkNodeViewSet(viewsets.ModelViewSet):
     # Доступ только для активных сотрудников
     permission_classes = [IsActiveStaffPermission]
 
-    # Подключаем фильтрацию
-    filter_backends = [DjangoFilterBackend]
+    # Подключаем фильтрацию, поиск и сортировку
+    filter_backends = [
+        DjangoFilterBackend,  # фильтрация по точным значениям полей
+        SearchFilter,  # поиск по текстовым полям
+        OrderingFilter,  # сортировка по указанным полям
+    ]
 
     # По ТЗ нужна фильтрация по стране
     filterset_fields = ("country",)
+
+    # Поля, по которым будет работать поиск ?search=
+    search_fields = (
+        "name",
+        "city",
+        "country",
+        "email",
+    )
+
+    # Поля, по которым можно сортировать через ?ordering=
+    ordering_fields = (
+        "name",
+        "created_at",
+        "country",
+        "city",
+        "hierarchy_level",
+    )
+
+    # Сортировка по умолчанию
+    ordering = ("name",)
