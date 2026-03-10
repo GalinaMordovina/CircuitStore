@@ -31,8 +31,8 @@ INSTALLED_APPS = [
     # сторонние
     "rest_framework",
     "django_filters",
-    "drf_yasg",
-        "rest_framework_simplejwt",  # JWT-аутентификация
+    "drf_spectacular",
+    "rest_framework_simplejwt",  # JWT-аутентификация
 
     # наши приложения
     "electronics",
@@ -148,6 +148,9 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+
+    # Генерация OpenAPI схемы
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 # Настройки JWT-токенов
@@ -157,4 +160,11 @@ SIMPLE_JWT = {
 
     # Refresh-токен живет дольше
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "CircuitStore API",
+    "DESCRIPTION": "API платформы торговой сети электроники",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
 }
