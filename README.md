@@ -1,32 +1,72 @@
 ## Онлайн платформа-торговой сети электроники
 
-### ## Ветка feature/api-crud-permissions
+### ## Ветка auth-and-access-check
 
-### Реализовано:
+### ## Аутентификация и контроль доступа
 
-- добавлен API для модели звеньев сети на DRF;
-- реализован NetworkNodeViewSet с CRUD-операциями;
-- настроена фильтрация по стране через django-filter;
-- доступ к API разрешен только активным сотрудникам (is_active=True и is_staff=True);
-- поле debt_to_supplier запрещено изменять через API;
-- поля hierarchy_level и created_at доступны только для чтения;
-- добавлен служебный эндпоинт проверки API: /api/health/.
+В проекте реализована аутентификация пользователей с использованием JWT-токенов и разграничение доступа к API.
 
-### Проверка API
-#### Доступные маршруты
-- GET /api/health/ - проверка работоспособности API
-- GET /api/network-nodes/ - список звеньев сети
-- POST /api/network-nodes/ - создание звена сети
-- GET /api/network-nodes/<id>/ - получение одного объекта
-- PUT /api/network-nodes/<id>/ - полное обновление
-- PATCH /api/network-nodes/<id>/ - частичное обновление
-- DELETE /api/network-nodes/<id>/ - удаление объекта
+### JWT-аутентификация
 
-#### Фильтрация
-- по стране:/api/network-nodes/?country=Germany
+Для аутентификации используется библиотека `djangorestframework-simplejwt`.
 
-#### Ограничения API
-Через API запрещено изменять поля:
-- debt_to_supplier
-- hierarchy_level
-- created_at
+#### Добавлены эндпоинты:
+
+| Метод | URL | Описание |
+|------|-----|-----|
+| POST | `/api/token/` | Получение access и refresh токенов |
+| POST | `/api/token/refresh/` | Обновление access токена |
+
+#### Пример запроса:
+
+```json
+POST /api/token/
+
+{
+  "username": "staff_user",
+  "password": "password"
+}
+```
+Ответ:
+```json
+{
+  "refresh": "jwt_refresh_token",
+  "access": "jwt_access_token"
+}
+```
+#### Использование токена
+
+Для доступа к защищённым эндпоинтам необходимо передать access-токен в заголовке запроса:
+
+```Authorization: Bearer <access_token>```
+
+Пример:
+```
+GET /api/network-nodes/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+#### Ограничение доступа
+
+Для защиты API реализован кастомный permission-класс:
+
+``` IsActiveStaffPermission ```
+
+Доступ к API имеют только пользователи, которые:
+- авторизованы
+- имеют статус сотрудника (`is_staff=True`)
+- имеют активную учетную запись (`is_active=True`)
+
+Данный permission применяется к ViewSet:
+```NetworkNodeViewSet```
+
+#### Проверка прав доступа
+
+Была выполнена проверка работы системы доступа с использованием трёх типов пользователей:
+
+| Пользователь   | is_staff | is_active | Результат           |
+| -------------- | -------- | --------- | ------------------- |
+| staff_user     | True     | True      | полный доступ к API |
+| regular_user   | False    | True      | доступ запрещён     |
+| inactive_staff | True     | False     | токен не выдаётся   |
+
+Таким образом доступ к API получают только активные сотрудники системы, что соответствует требованиям задания.

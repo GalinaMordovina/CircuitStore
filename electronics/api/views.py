@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 
@@ -18,6 +18,21 @@ class HealthCheckView(APIView):
     def get(self, request):
         # Возвращаем простой ответ для проверки работоспособности API
         return Response({"status": "ok"})
+
+# class HealthCheckView(APIView):
+#     """Проверка, что JWT-аутентификация работает."""
+#
+#     # Временно закрываем endpoint авторизацией для проверки токена
+#     permission_classes = [IsAuthenticated]
+#
+#     def get(self, request):
+#         return Response(
+#             {
+#                 "status": "ok",
+#                 "user": request.user.username,
+#                 "is_authenticated": request.user.is_authenticated,
+#             }
+#         )
 
 
 class NetworkNodeViewSet(viewsets.ModelViewSet):
