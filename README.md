@@ -1,93 +1,29 @@
 ## Онлайн платформа-торговой сети электроники
 
-### Ветка postgres-settings
-#### В рамках данной ветки реализовано подключение проекта к базе данных PostgreSQL.
+### Ветка api-filters-search
 
-### Настройка PostgreSQL
-#### 1. Создание базы данных
+## Фильтрация, поиск и сортировка API
 
-В PostgreSQL создаётся база данных:
-```
-CREATE DATABASE circuitstore_db;
-```
-#### 2. Создание пользователя
+Для endpoint `/api/network-nodes/` реализованы:
 
-Создаётся отдельный пользователь для работы приложения:
-```
-CREATE USER circuitstore_user WITH PASSWORD 'your_password';
-```
-#### 3. Выдача прав пользователю
+- фильтрация по стране
+- поиск по названию, городу, стране и email
+- сортировка по имени, дате создания, стране, городу и уровню иерархии
 
-Пользователь получает права на работу с базой данных:
-```
-GRANT ALL PRIVILEGES ON DATABASE circuitstore_db TO circuitstore_user;
-```
-Это позволяет:
-- читать данные
-- создавать таблицы
-- изменять таблицы
-- использовать базу данных для тестирования
+### Примеры запросов
 
-#### 4. Настройка подключения в Django
+Фильтрация по стране:
 
-В `config/settings.py` используется подключение:
-```
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "circuitstore_db",
-        "USER": "circuitstore_user",
-        "PASSWORD": "your_password",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
-}
-```
-#### 5. Применение миграций
+`GET /api/network-nodes/?country=Germany`
 
-После подключения базы данных выполняются миграции:
-```
-python manage.py migrate
-```
-Это создаёт все таблицы проекта.
+Поиск:
 
-#### 6. Создание администратора
-```
-python manage.py createsuperuser
-```
-После этого можно работать через Django Admin:
-```
-http://127.0.0.1:8000/admin/
-```
+`GET /api/network-nodes/?search=Apple`
 
-### Проверка работы базы данных
+Сортировка по имени:
 
-В проекте реализована модель сети поставок электроники:
+`GET /api/network-nodes/?ordering=name`
 
-- Factory - завод
-- Retail - розничная сеть
-- Entrepreneur - магазин
+Сортировка по дате создания по убыванию:
 
-Пример структуры сети:
-
-Apple Factory
-
-    ↓
-Apple Retail
-
-    ↓
-Local Electronics Shop
-
-И аналогично для Samsung.
-
-#### Данные сохраняются в PostgreSQL и могут быть проверены SQL-запросом:
-```
-SELECT 
-n.name AS node,
-p.name AS product,
-p.model AS model
-FROM electronics_networknode_products np
-JOIN electronics_networknode n ON np.networknode_id = n.id
-JOIN electronics_product p ON np.product_id = p.id
-ORDER BY n.name;
-```
+`GET /api/network-nodes/?ordering=-created_at`
